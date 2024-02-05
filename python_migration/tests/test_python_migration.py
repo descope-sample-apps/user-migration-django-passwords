@@ -6,8 +6,8 @@
 import unittest
 from click.testing import CliRunner
 
-from python_migration import python_migration
-from python_migration import cli
+from src import migration
+from src import cli
 
 
 class TestPython_migration(unittest.TestCase):

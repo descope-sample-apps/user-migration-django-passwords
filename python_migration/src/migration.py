@@ -76,7 +76,7 @@ def write_csv(file_path: str, data: List[Dict[str, Any]]):
 
 
 def process_csv(file_path: str):
-    imported_mapped_users = []
+    post_migration_user_export = []
     
     with open(file_path, mode='r', newline='') as file:
         reader = csv.DictReader(file)
@@ -93,14 +93,14 @@ def process_csv(file_path: str):
             if created_user:
                 print("Created User:", created_user)
                 created_user_map = {"userId": created_user["userId"], "email": created_user["email"]}
-                imported_mapped_users.append(created_user_map)
+                post_migration_user_export.append(created_user_map)
                 
                 updated_user = update_user_status(created_user["email"], "enabled")
                 print("Updated User:", updated_user)
     
     print("Mapped users:")
-    print(imported_mapped_users)
-    write_csv("src/export/imported_users.csv", imported_mapped_users)
+    print(post_migration_user_export)
+    write_csv("src/export/post_migration_user_export.csv", post_migration_user_export)
 
 # Since the original Node.js uses async/await and Python's requests library is synchronous,
 # we remove async/await for the synchronous calls in this Python version.
