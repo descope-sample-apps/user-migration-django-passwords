@@ -26,5 +26,5 @@ On Windows:
 
 pip install -r requirements.txt
 
-python3 -m src.main
+python -m src.main
 ```
