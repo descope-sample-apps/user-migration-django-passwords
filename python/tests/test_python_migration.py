@@ -6,7 +6,7 @@
 import unittest
 from click.testing import CliRunner
 
-from src import migration
+from python.src import main
 from src import cli
 
 

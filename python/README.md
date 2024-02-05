@@ -15,5 +15,16 @@ The Descope Management Key can be found [here](https://app.descope.com/settings/
 2. Run script
 
 ```
-python3 -m src.migration
+python -m venv venv
+
+
+On MacOS and Linux:
+source venv/bin/activate
+
+On Windows:
+.\venv\Scripts\activate
+
+pip install -r requirements.txt
+
+python3 -m src.main
 ```
