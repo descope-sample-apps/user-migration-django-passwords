@@ -144,21 +144,21 @@ if __name__ == '__main__':
 
 
 
-def iteratively_update_users(users: List[UserObj], batchCount: int) -> Dict[str, Any]:
-    try:
-        print("Updating users...")
-        count = 0
-        for user in users:
-            print("Updating user ", count, " of batch ", batchCount)
-            data = descope_client.mgmt.user.activate(user.email)
-            count += 1
+# def iteratively_update_users(users: List[UserObj], batchCount: int) -> Dict[str, Any]:
+#     try:
+#         print("Updating users...")
+#         count = 0
+#         for user in users:
+#             print("Updating user ", count, " of batch ", batchCount)
+#             data = descope_client.mgmt.user.activate(user.email)
+#             count += 1
 
-        if "errorCode" in data:
-            print(data)
-            return None
-        return data
+#         if "errorCode" in data:
+#             print(data)
+#             return None
+#         return data
     
         
-    except requests.RequestException as e:
-        print(f"Error creating user: {e}")
-        return None
+#     except requests.RequestException as e:
+#         print(f"Error creating user: {e}")
+#         return None
