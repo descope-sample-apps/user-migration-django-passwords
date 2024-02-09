@@ -27,12 +27,61 @@ def batch_create_users(users: List[UserObj]) -> Dict[str, Any]:
         print(f"Error creating user: {e}")
         return None
 
+def get_user_object(row):
+    row["verifiedEmail"] = True if row["verifiedEmail"] == "TRUE" else False
+    row["password"] = None if row["password"] == "" else row["password"]
+    try:
+        row["roleNames"] = json.loads(row["roleNames"])
+    except json.JSONDecodeError:
+        row["roleNames"] = []
+    
+    user = row
+
+    user_obj_args = {
+        "login_id": user["email"],
+        "email": user["email"],
+        "display_name": user.get("displayName"),
+        "role_names": user.get("roleNames"),
+        # "family_name": user.get("familyName"),
+        # "given_name": user.get("givenName"),
+    }
+
+    if "password" in user and user["password"]:
+        user_obj_args["password"] = UserPassword(
+            hashed=UserPasswordDjango(
+                hash=user["password"]
+            )
+        )
+
+    return UserObj(**user_obj_args)
+
 
 def write_csv(file_path: str, data: List[Dict[str, Any]]):
+    if not data:
+        print("No data to write.")
+        return
     with open(file_path, mode='w', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=data[0].keys())
         writer.writeheader()
         writer.writerows(data)
+
+def process_user_batch(users, batchCount, post_migration_user_export, failed_users):
+    if not users:
+        return  # If the users list is empty, do nothing
+
+    print(f"Creating users of batch {batchCount}")
+    data = batch_create_users(users)
+    if data:  # Check if data is not None
+        created_users = data.get("createdUsers", [])
+        res_failed_users = data.get("failedUsers", [])
+
+        failed_users.extend(res_failed_users)
+
+        for created_user in created_users:
+            created_user_map = {"userId": created_user["userId"], "email": created_user["email"]}
+            post_migration_user_export.append(created_user_map)
+
+        print(f"Created users of batch {batchCount}")
 
 
 def process_csv(file_path: str):
@@ -46,58 +95,25 @@ def process_csv(file_path: str):
         batchCount = 0
         maxBatch = 100
         for row in reader:
-            row["verifiedEmail"] = True if row["verifiedEmail"] == "TRUE" else False
-            row["password"] = None if row["password"] == "" else row["password"]
-            try:
-                row["roleNames"] = json.loads(row["roleNames"])
-            except json.JSONDecodeError:
-                row["roleNames"] = []
-            
-            user = row
-
-            user_obj_args = {
-                "login_id": user["email"],
-                "email": user["email"],
-                "display_name": user.get("displayName"),
-                "role_names": user.get("roleNames"),
-                # "family_name": user.get("familyName"),
-                # "given_name": user.get("givenName"),
-            }
-
-            if "password" in user and user["password"]:
-                user_obj_args["password"] = UserPassword(
-                    hashed=UserPasswordDjango(
-                        hash=user["password"]
-                    )
-                )
-
-            user_obj = UserObj(**user_obj_args)
-            users.append(user_obj)
+            users.append(get_user_object(row))
 
             if len(users) == maxBatch:
                 batchCount += 1
-                print("Creating users of batch ", batchCount)
-                data = batch_create_users(users)
-                created_users = data.get("createdUsers")
-                res_failed_users = data.get("failedUsers")
-                failed_users.extend(res_failed_users)
-
-                for created_user in created_users:
-                    created_user_map = {"userId": created_user["userId"], "email": created_user["email"]}
-                    post_migration_user_export.append(created_user_map)
-
-                print("Created users of batch ", batchCount)
+                process_user_batch(users, batchCount, post_migration_user_export, failed_users)
                 users = []
-            if batchCount == 2:
-                break
             rowCount += 1
-        
-    
-    print("Create export")
+            
+        if users: 
+            batchCount += 1
+            process_user_batch(users, batchCount, post_migration_user_export, failed_users)
+            
+
+    print("Failed users: ", failed_users)
+    print("\nCreate export")
     write_csv("src/export/post_migration_user_export.csv", post_migration_user_export)
 
 if __name__ == '__main__':
-    process_csv('src/generated_emails.csv')
+    process_csv('src/sample_exported_users.csv')
 
 
 
